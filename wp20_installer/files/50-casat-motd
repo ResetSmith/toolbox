@@ -1,0 +1,90 @@
+#! /bin/sh
+
+#Created per STIG V-75825
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "\n"
+printf "      ██████╗ █████╗ ███████╗ █████╗ ████████╗    ██╗    ██╗███████╗██████╗\n"
+printf "     ██╔════╝██╔══██╗██╔════╝██╔══██╗╚══██╔══╝    ██║    ██║██╔════╝██╔══██╗\n"
+printf "     ██║     ███████║███████╗███████║   ██║       ██║ █╗ ██║█████╗  ██████╔╝\n"
+printf "     ██║     ██╔══██║╚════██║██╔══██║   ██║       ██║███╗██║██╔══╝  ██╔══██╗\n"
+printf "     ╚██████╗██║  ██║███████║██║  ██║   ██║       ╚███╔███╔╝███████╗██████╔╝\n"
+printf "      ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝        ╚══╝╚══╝ ╚══════╝╚═════╝ \n"
+printf "\n"
+printf "\n"
+#Below was defined within STIG V-75825
+printf "You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG-authorized use only.
+By using this IS (which includes any device attached to this IS), you consent to the following conditions:
+
+-The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to:
+penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE),
+and counterintelligence (CI) investigations.
+
+-At any time, the USG may inspect and seize data stored on this IS.
+
+-Communications using, or data stored on, this IS are not private, are subject to routine monitoring, interception, and search,
+and may be disclosed or used for any USG-authorized purpose.
+
+-This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy.
+
+-Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring
+of the content of privileged communications, or work product, related to personal representation or services by attorneys,
+psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential.
+
+See User Agreement for details.\n"
+
+#Gives readout of system information
+  cores=$(grep -c ^processor /proc/cpuinfo 2>/dev/null)
+[ "$cores" -eq "0" ] && cores=1
+threshold="${cores:-1}.0"
+if [ $(echo "`cut -f1 -d ' ' /proc/loadavg` < $threshold" | bc) -eq 1 ]; then
+    echo
+    echo -n "  System information as of "
+    /bin/date
+    echo
+    /usr/bin/landscape-sysinfo
+    echo "\n"
+else
+    echo
+    echo " System information disabled due to load higher than $threshold"
+fi
+
+#Gives Ubuntu version information
+[ -r /etc/lsb-release ] && . /etc/lsb-release
+if [ -z "$DISTRIB_DESCRIPTION" ] && [ -x /usr/bin/lsb_release ]; then
+        # Fall back to using the very slow lsb_release utility
+        DISTRIB_DESCRIPTION=$(lsb_release -s -d)
+fi
+printf "Welcome to %s (%s %s %s)\n" "$DISTRIB_DESCRIPTION" "$(uname -o)" "$(uname -r)" "$(uname -m)"
+
+#Update checker and notification
+stamp="/var/lib/update-notifier/updates-available"
+[ ! -r "$stamp" ] || cat "$stamp"
