@@ -15,7 +15,7 @@ mysql -e "DELETE FROM mysql.user WHERE User='';"
 # Creates the table needed for Wordpress, defines user and password, and grants permission
 mysql -e "CREATE DATABASE $WPHOSTNAME DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;"
 mysql -e "CREATE USER '$WPUSERNAME'@'localhost' IDENTIFIED WITH mysql_native_password BY '$WPPASSWORD';"
-mysql -e "GRANT ALL ON $WPHOSTNAME.* TO '$WPUSERNAME'@'localhost'"
+mysql -e "GRANT ALL ON $WPHOSTNAME.* TO '$WPUSERNAME'@'localhost';"
 # applies updates to mysql users
 mysql -e "FLUSH PRIVILEGES;"
 #
