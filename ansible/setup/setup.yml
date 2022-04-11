@@ -1,0 +1,209 @@
+---
+- hosts: new
+  become: true
+
+  tasks:
+# Check for and run updates
+    - name: Update apt repo and cache on all servers
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all packages on servers
+      apt: upgrade=dist force_apt_get=yes
+
+# Set server timezone to Pacific time
+    - name: Set timezone to America/Los Angeles
+      community.general.timezone:
+        name: America/Los_Angeles
+
+# Setup custom Root prompt
+    - name: Enable colored prompts in terminal for Root
+      shell: sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/g' ~/.bashrc
+      args:
+        warn: false
+
+    - name: "Add line for custom prompt to end of Root's .bashrc file"
+      blockinfile:
+        dest: ~/.bashrc
+        block: |
+          # Custom prompt
+          export PS1="\[$(tput bold)\]\[\033[38;5;10m\]\u\[$(tput sgr0)\] @\[$(tput sgr0)\]\[$(tput bold)\]\[\033[38;5;10m\]\H\[$(tput sgr0)\] \A\n[\[$(tput sgr0)\]\[\033[38;5;10m\]\w\[$(tput sgr0)\]] \\$ \[$(tput sgr0)\]"
+
+# Enable SSH connections through the firewall and then enable
+    - name: "Allow SSH connections in UFW"
+      community.general.ufw:
+        rule: allow
+        name: OpenSSH
+
+    - name: "Enable Firewall"
+      community.general.ufw:
+        state: enabled
+
+# Install Fail2Ban
+    - name: Download and install Fail2Ban
+      apt:
+        name: fail2ban
+        state: present
+
+    - name: Create Fail2Ban jail file
+      template:
+        src: files/jail.local.j2
+        dest: /etc/fail2ban/jail.local
+
+# STIG settings
+# Security Technical Implementation Guidelines defined by the DoD
+# These are recommended security settings for servers containing Federal Data
+# These are not required but recommended
+    - name: Updates unmask permissions to 077
+      shell: sed -i '151s/022/077/g' /etc/login.defs
+      args:
+        warn: false
+
+    - name: Updates internal server logging
+      blockinfile:
+        path: /etc/rsyslog.d/50-default.conf
+        block: |
+          ###################################################################
+          #
+          # Configure the Ubuntu operating system to monitor all remote access methods
+          # by adding the following lines to the /etc/rsyslog.d/50-default.conf file
+          # per STIG V-75863
+          #
+          auth.*,authpriv.*               /var/log/secure
+          daemon.notice                   /var/log/messages
+          #
+          # Configure rsyslog to log all cron messages - per STIG V-75865
+          cron.*                           /var/log/cron.log
+          #
+
+    - name: Updates log file ownership
+      shell: chmod 0770 /var/log
+      args:
+        warn: false
+
+    - name: Creates script to logout users after 15 minutes of inactivity
+      template:
+        src: files/autologout.sh.j2
+        dest: /etc/profile.d/autologout.sh
+
+    - name: Set autologout script to executable
+      file:
+        path: /etc/profile.d/autologout.sh
+        mode: +x
+
+    - name: Set minimum number of hashing rounds in PAM
+      shell: sed -i '25s/$/ rounds=5000/' /etc/pam.d/common-password
+      args:
+        warn: false
+
+    - name: Remove PAM's common-auth file
+      file:
+        path: /etc/pam.d/common-auth
+        state: absent
+
+    - name: Create new common-auth file for PAM
+      template:
+        src: files/common-auth.j2
+        dest: /etc/pam.d/common-auth
+
+    - name: Amend additional STIG settings to sshd
+      blockinfile:
+        path: /etc/ssh/sshd_config
+        block: |
+          ###################################################################
+          #
+          # Additional settings defined by STIGs
+          #
+          # Update sshd_config to enforce SSHv2 for network access to all accounts
+          # per STIG V-75823
+          Protocol 2
+          #
+          # Allow the SSH daemon to only implement DoD-approved encryption
+          # per STIG V-75829
+          Ciphers aes128-ctr,aes192-ctr,aes256-ctr
+          #
+          # Allow the SSH daemon to only use Message Authentication Codes (MACs) that
+          # employ FIPS 140-2 approved ciphers
+          # per STIG V-75831
+          MACs hmac-sha2-256,hmac-sha2-512
+          #
+          # The system must display the date and time of the last successful account logon
+          # upon an SSH logon
+          # per STIG V-75835
+          PrintLastLog yes
+          #
+          # Unattended or automatic login via ssh must not be allowed
+          # per STIG V-75833
+          PermitEmptyPasswords no
+          PermitUserEnvironment no
+          #
+          # Automatically terminate all network connections associated with SSH traffic at
+          # the end of a session or after a '10' minute period of inactivity
+          # per STIG V-75837
+          ClientAliveInterval 600
+          #
+          # The SSH daemon must not allow authentication using known hosts authentication
+          IgnoreUserKnownHosts yes
+          #
+          # The SSH daemon must perform strict mode checking of home directory configuration files
+          # per STIG V-75847
+          StrictModes yes
+          #
+          # The SSH daemon must use privilege separation
+          # SSH daemon privilege separation causes the SSH process to drop root privileges
+          # when not needed, which would decrease the impact of software vulnerabilities
+          # in the unprivileged section.
+          # per STIG V-75849
+          UsePrivilegeSeparation yes
+          #
+          # The SSH daemon must not allow compression or must only allow compression
+          # after successful authentication
+          # per STIG V-75851
+          Compression delayed
+          #
+
+    - name: Amend additional STIG settings to sysctl.conf
+      blockinfile:
+        path: /etc/sysctl.conf
+        block: |
+          ###################################################################
+          # Additional settings defined by STIGs
+          #
+          # Configure the Ubuntu operating system to use TCP syncookies
+          # per STIG V-75869
+          net.ipv4.tcp_syncookies=1
+          #
+          # Configure Ubuntu to not forward IPv4 source-routed packets
+          # per STIG V-75873
+          net.ipv4.conf.all.accept_source_route=0
+          #
+          # Configure Ubuntu to not forward IPv4 source-routed packets by default
+          # per STIG V-75875
+          net.ipv4.conf.default.accept_source_route=0
+          #
+          # Configure Ubuntu to not respond to IPv4 ICMP echoes sent to a broadcast address
+          # per STIG V-75877
+          net.ipv4.icmp_echo_ignore_broadcasts=1
+          #
+          # Configure Ubuntu to prevent IPv4 ICMP redirect messages from being accepted
+          # per STIG V-75879
+          net.ipv4.conf.default.accept_redirects=0
+          #
+          # Configure Ubuntu to ignore IPv4 ICMP redirect messages
+          # per STIG V-75881
+          net.ipv4.conf.all.accept_redirects=0
+          #
+
+# Reboot server if needed
+    - name: Check if a reboot is needed on servers
+      register: reboot_required_file
+      stat: path=/var/run/reboot-required get_md5=no
+
+    - name: Reboot the server if kernel updated
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: uptime
+      when: reboot_required_file.stat.exists
