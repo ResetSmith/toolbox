@@ -114,27 +114,18 @@ sudo service sshd restart
 ```
 ---
 
-## Digital Ocean notes
-### Installing DO Monitoring Tool on  server as of 0721
-```
-curl -sSL https://repos.insights.digitalocean.com/install.sh | sudo bash
-```
-Check DO Monitoring Tool status
-```
-systemctl status do-agent
-```
-Remove DO Monitoring Tool
-```
-apt-get purge do-agent
-```
-If after install you are seeing a message like this:
-*WARNING:root:could not open file '/etc/apt/sources.list.d/digitalocean-agent.list'*
-then permissions must be updated
-```
-chmod 0644 /etc/apt/sources.list.d/digitalocean-agent.list
-```
----
+## Hash a password
+Use mkpasswd
+May need to install whois package first
 
+Run with -m help to see hashing method options
+```
+mkpasswd -m help
+mkpasswd -m sha512crypt
+```
+Output is the hashed password
+
+---
 
 ### Update SSH Key on server
 Check apache site config file for key file locations
