@@ -29,22 +29,3 @@ maxretry  = 30
 findtime  = 259200
 bantime   = 608400
 ignoreip  = 134.197.13.0/24
-
-# Apache jail
-#
-[apache]
-enabled   = true
-port      = http,https
-filter    = apache-auth
-logpath   = /var/log/apache*/*error.log
-maxretry  = 3
-
-[apache-overflows]
-enabled   = true
-filter    = apache-overflows
-logpath   = /var/log/apache*/*error.log
-
-[apache-badbots]
-enabled   = true
-filter    = apache-badbots
-logpath   = /var/log/apache*/*access.log
