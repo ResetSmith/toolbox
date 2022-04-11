@@ -1,0 +1,21 @@
+---
+# Users file
+# Users that need access to our servers should be added here
+# All Users should follow the same format:
+# {name: 'NAME', password: 'HASHED PASSWORD', groups: ['GROUPS'], system: no, shell: '/bin/bash'}
+# name: put the username for the user here in single quotes
+# password: put the user's password here in a hashed format, use the command: mkpasswd -m sha512crypt
+# groups: put which groups the user should belong to here, in single quotes inside brackets, sudo is the admin group, leave blank if none are needed
+# system: if the user is an actual user set system to no, if the user is for an app to use set system to yes
+# shell: set to '/bin/bash' for a real user, set to '/bin/false' for a system user that doesn't need remote access
+
+# Each user requires a matching id_rsa.pub file in the 'files' folder to grant SSH access
+# If the user will not need to login remotely still include an empty id_rsa.pub file in their name
+
+user_details:
+  - {name: '$USER_1', password: '$HASHED_PASSWORD', groups: [''], system: no, shell: '/bin/bash'}
+  - {name: '$USER_2', password: '$HASHED_PASSWORD', groups: [''], system: no, shell: '/bin/bash'}
+# Add 'live' users to the list above
+# System users can be added below
+  - {name: '$USER_3', password: '', groups: [''], system: yes, shell: '/bin/bash'}
+  - {name: '$USER_4', password: '', groups: [''], system: yes, shell: '/bin/false'}

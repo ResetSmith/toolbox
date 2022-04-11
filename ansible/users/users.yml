@@ -1,0 +1,46 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - vars/casat_users.yml
+
+  tasks:
+# Creates user, sets password, shell, and user type
+# pulls 'user_details' from vars/casat_users.yml
+    - name: "Create CASAT users"
+      user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+        groups: "{{ item.groups }}"
+        state: present
+        shell: "{{ item.shell }}"
+        system: "{{ item.system }}"
+      with_items: "{{ user_details }}"
+# Copies id_rsa.pub keys from files/
+# User's name must match the prefix of the id_rsa.pub
+    - name: "Copy public keys to user's authorized_key files"
+      authorized_key:
+        user: "{{ item.name }}"
+        state: present
+        key: "{{ lookup('file', 'files/'+ item.name + '.id_rsa.pub') }}"
+      with_items: "{{ user_details }}"
+# Next tasks set custom bash prompts to help readability
+    - name: "Update user's bashrc files for custom prompts"
+      template:
+        src: "files/bashrc.j2"
+        dest: "/home/{{ item.name }}/.bashrc"
+        owner: "{{ item.name }}"
+        group: "{{ item.name }}"
+        mode: 0644
+      with_items: "{{ user_details }}"
+
+    - name: "Create user's bash_profile to support custom prompts"
+      copy:
+        dest: "/home/{{ item.name }}/.bash_profile"
+        content: |
+          # tells profile to check for .bashrc
+          [ -f "/home/{{ item.name }}/.bashrc" ] && source "/home/{{ item.name }}/.bashrc"
+        owner: "{{ item.name }}"
+        group: "{{ item.name }}"
+        mode: 0644
+      with_items: "{{ user_details }}"

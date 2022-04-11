@@ -1,0 +1,5 @@
+# custom bash prompt
+# shows username followed by server hostname and the current server time
+# moves working prompt to line below the username and shows the current active folder
+# the server hostname will show in green
+export PS1="\u @\[$(tput sgr0)\]\[\033[38;5;10m\]\H\[$(tput sgr0)\] \A\n[\[$(tput sgr0)\]\[\033[38;5;10m\]\w\[$(tput sgr0)\]] \\$ \[$(tput sgr0)\]"
