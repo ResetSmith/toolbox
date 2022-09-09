@@ -496,3 +496,24 @@ search auth.log for the term "Connection closed" and make a list of the IP addre
 ```
 grep "Connection closed" /var/log/auth.log | grep -Po "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | sort | uniq -c
 ```
+
+# Ansible
+
+## Install
+Check if pip is installed (necssary for Ansible)
+```
+python3 -m pip -V
+```
+If not installed then install with
+```
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3 get-pip.py --user
+```
+Install Ansible
+```
+python3 -m pip install --user $USERNAME_GOES_HERE"
+```
+Add the Ansible directory location to the PATH so it will run from anywhere 
+```
+export PATH="/root/.local/bin:$PATH"
+```
